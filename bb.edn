@@ -1,7 +1,11 @@
 {:paths ["src"]
  :deps
  {io.lambdaforge/datalog-parser {:mvn/version "0.1.11"}
-  me.tagaholic/dlint {:mvn/version "0.1.0"}}
+  me.tagaholic/dlint {:mvn/version "0.1.0"}
+  logseq/graph-parser {:git/url "https://github.com/logseq/logseq"
+                       :git/sha "82cf4d3c65acbf230a3170640fe271dd74095067"
+                       :git/tag "0.9.8"
+                       :deps/root "deps/graph-parser"}}
  :tasks
  {:requires ([clojure.string :as str])
 

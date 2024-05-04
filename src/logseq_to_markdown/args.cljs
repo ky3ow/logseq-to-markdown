@@ -26,6 +26,8 @@
     :default false]
    ["-d" "--delete-outputdir" "Delete output directory before exporting data"
     :default false]
+   ["-g" "--generate-database" "Generate transit file from directory instead of parsing to md"
+    :default false]
    [nil "--time-pattern" "Template Pattern for Time Strings"
     :default "yyyy-MM-dd"
     :required "PATTERN"]

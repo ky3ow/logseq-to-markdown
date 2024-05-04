@@ -68,3 +68,16 @@
   (if (exists? src)
     (copy-file src dst)
     (println "Warning: Could not find file " src " in graph folder!")))
+
+(defn- prepend
+  [s prefix]
+  (str prefix s))
+
+(defn write-graph-transit
+  [graph-dir datascript]
+  (let [name (path/resolve graph-dir)
+        bname (path/basename name)
+        file-name (-> name (prepend "logseq_local_") (str ".transit") (s/replace "/" "++"))
+        file-location (path/join (expand-home ".logseq/graphs") file-name)]
+    (fs/writeFileSync file-location datascript)
+    bname))

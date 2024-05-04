@@ -1,6 +1,7 @@
 (ns logseq-to-markdown.graph
   (:require [logseq-to-markdown.fs :as fs]
             [logseq-to-markdown.config :as config]
+            [logseq.graph-parser.cli :as gp-cli]
             [clojure.string :as s]
             [datascript.transit :as dt]
             [datascript.core :as d]))
@@ -49,6 +50,19 @@
 (defn get-graph-db
   []
   @graph-db)
+
+(defn parse-to-transit
+  [graph-dir]
+  (let [{:keys [conn]} (gp-cli/parse-graph graph-dir {:verbose false})]
+    @conn))
+
+;; file in which logseq db stored
+(defn generate-transit
+  [graph-dir]
+  (let [db (parse-to-transit graph-dir)
+        dts (dt/write-transit-str db)
+        graph-name (fs/write-graph-transit graph-dir dts)]
+   graph-name))
 
 (defn page-exists?
   [link]
