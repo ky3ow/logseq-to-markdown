@@ -73,19 +73,25 @@
 (defn parse-block-refs
   [text]
   (let [pattern #"\(\(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)\)"
-        block-ref-text (re-find pattern text)
-        alias-pattern #"\[([^\[]*?)\]\([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\)"
-        alias-text (re-find alias-pattern text)]
-    (if (empty? block-ref-text)
-      (if (empty? alias-text)
-        text
-        (str (last alias-text)))
-      (let [block-ref-id (last block-ref-text)
-            data (graph/get-ref-block block-ref-id)]
-        (if (seq data)
-          (let [id-pattern (re-pattern (str "id:: " block-ref-id))]
-            (s/replace data id-pattern ""))
-          text)))))
+        alias-pattern #"\[([^\[]*?)\]\(\(\([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\)\)\)"
+        replace-aliases (fn [txt]
+                          (let [matches (re-seq alias-pattern txt)]
+                            (reduce #(s/replace %1 (first %2) (second %2)) txt matches)))
+        replace-refs (fn [txt]
+                       (let [matches (re-seq pattern txt)]
+                         (reduce
+                          #(let [block-ref-id (last %2)
+                                 block-content (graph/get-ref-block block-ref-id)]
+                             (if (seq block-content)
+                               (let [id-pattern (re-pattern (str "id:: " block-ref-id))
+                                     block-content* (s/replace block-content id-pattern "")]
+                                 (s/replace %1 (first %2) block-content*))
+                               (%1)))
+                          txt
+                          matches)))]
+    (-> text
+        (replace-aliases)
+        (replace-refs))))
 
 (defn parse-image
   [text]
