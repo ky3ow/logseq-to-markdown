@@ -73,22 +73,40 @@
 (defn parse-block-refs
   [text]
   (let [pattern #"\(\(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)\)"
-        alias-pattern #"\[([^\[]*?)\]\(\(\([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\)\)\)"
-        replace-refs (fn [txt]
-                       (let [matches (re-seq pattern txt)]
-                         (reduce
-                          #(let [block-ref-id (last %2)
-                                 block-content (graph/get-ref-block block-ref-id)]
-                             (if (seq block-content)
-                               (let [id-pattern (re-pattern (str "id:: " block-ref-id))
-                                     block-content* (utils/trim-newlines (s/replace block-content id-pattern ""))]
-                                 (s/replace %1 (first %2) block-content*))
-                               (%1)))
-                          txt
-                          matches)))]
-    (-> text
-        (s/replace alias-pattern "$1")
-        (replace-refs))))
+        alias-pattern #"\[([^\[]*?)\]\(\(\(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)\)\)"
+        header-id (fn [content]
+                    (str "#" (-> content
+                                 (s/replace #"[$&+,:;=?@#|'<>\]\[.^*()%!-]" "")
+                                 s/trim
+                                 (s/replace " " "-")
+                                 s/lower-case)))
+        process-matches (fn [txt match replace-fn]
+                          (let [block-ref-id (last match)
+                                [block page] (graph/get-ref-block block-ref-id)
+                                block-content (:block/content block)
+                                page-name (:block/original-name page)
+                                page-public? (:public (:block/properties page))]
+                            (if (seq block-content)
+                              (let [id-pattern (re-pattern (str "id:: " block-ref-id))
+                                    heading? (and (s/starts-with? block-content "#") page-public?)
+                                    block-content* (-> block-content (s/replace id-pattern "") utils/trim-newlines)]
+                                (replace-fn txt match block-content* page-name heading?))
+                              txt)))
+        replace-aliased-ref (fn [txt match content page-name heading?]
+                              (let [[whole aliased _] match
+                                    new-content (if heading?
+                                                  (str "[" aliased "]({{< ref \"/pages/" page-name (header-id content) "\" >}})")
+                                                  aliased)]
+                                (s/replace txt whole new-content)))
+        replace-ref (fn [txt match content page-name heading?]
+                      (let [[whole _] match
+                            new-content (if heading?
+                                          (str "[" content "]({{< ref \"/pages/" page-name (header-id content) "\" >}})")
+                                          content)]
+                        (s/replace txt whole new-content)))
+        processed-aliases (reduce #(process-matches %1 %2 replace-aliased-ref) text (re-seq alias-pattern text))
+        processed-refs (reduce #(process-matches %1 %2 replace-ref) processed-aliases (re-seq pattern processed-aliases))]
+    processed-refs))
 
 (defn parse-image
   [text]
@@ -351,7 +369,7 @@
                                               (parse-embeds)
                                               (parse-video)
                                               (parse-markers)
-                                              (parse-highlights)
+                                              ; (parse-highlights)
                                               (parse-queries)
                                               (parse-org-cmd)
                                               (rm-logbook-data)

@@ -62,7 +62,7 @@
   (let [db (parse-to-transit graph-dir)
         dts (dt/write-transit-str db)
         graph-name (fs/write-graph-transit graph-dir dts)]
-   graph-name))
+    graph-name))
 
 (defn page-exists?
   [link]
@@ -78,17 +78,17 @@
 
 (defn get-ref-block
   [block-ref-id]
-  (let [query '[:find ?c
+  (let [query '[:find (pull ?b [:block/content])
+                (pull ?p [:block/original-name :block/properties [:public]])
                 :in $ ?block-ref-id
                 :where
-                [?p :block/properties ?pr]
+                [?b :block/properties ?pr]
                 [(get ?pr :id) ?t]
                 [(= ?block-ref-id ?t)]
-                [?p :block/content ?c]]
+                [?b :block/page ?p]]
         query-res (d/q query (get-graph-db) block-ref-id)]
-    (if (> (count query-res) 0)
-      (nth (map #(get % 0) query-res) 0)
-      ())))
+    (when (seq query-res)
+      (first query-res))))
 
 (defn get-namespace-pages
   [namespace]
