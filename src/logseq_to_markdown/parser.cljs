@@ -74,9 +74,6 @@
   [text]
   (let [pattern #"\(\(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)\)"
         alias-pattern #"\[([^\[]*?)\]\(\(\([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\)\)\)"
-        replace-aliases (fn [txt]
-                          (let [matches (re-seq alias-pattern txt)]
-                            (reduce #(s/replace %1 (first %2) (second %2)) txt matches)))
         replace-refs (fn [txt]
                        (let [matches (re-seq pattern txt)]
                          (reduce
@@ -84,13 +81,13 @@
                                  block-content (graph/get-ref-block block-ref-id)]
                              (if (seq block-content)
                                (let [id-pattern (re-pattern (str "id:: " block-ref-id))
-                                     block-content* (s/replace block-content id-pattern "")]
+                                     block-content* (utils/trim-newlines (s/replace block-content id-pattern ""))]
                                  (s/replace %1 (first %2) block-content*))
                                (%1)))
                           txt
                           matches)))]
     (-> text
-        (replace-aliases)
+        (s/replace alias-pattern "$1")
         (replace-refs))))
 
 (defn parse-image
