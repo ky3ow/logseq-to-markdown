@@ -72,9 +72,9 @@
 
 (defn parse-block-refs
   [text]
-  (let [pattern #"\(\(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)\)"
-        alias-pattern #"\[([^\[]*?)\]\(\(\(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)\)\)"
-        header-id (fn [content]
+  (let [ref-pattern #"\(\(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)\)"
+        aliased-ref-pattern #"\[([^\[]*?)\]\(\(\(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\)\)\)"
+        ->header-id (fn [content]
                     (str "#" (-> content
                                  (s/replace #"[$&+,:;=?@#|'<>\]\[.^*()%!-]" "")
                                  s/trim
@@ -95,17 +95,17 @@
         replace-aliased-ref (fn [txt match content page-name heading?]
                               (let [[whole aliased _] match
                                     new-content (if heading?
-                                                  (str "[" aliased "]({{< ref \"/pages/" page-name (header-id content) "\" >}})")
+                                                  (str "[" aliased "]({{< ref \"/pages/" page-name (->header-id content) "\" >}})")
                                                   aliased)]
                                 (s/replace txt whole new-content)))
         replace-ref (fn [txt match content page-name heading?]
                       (let [[whole _] match
                             new-content (if heading?
-                                          (str "[" content "]({{< ref \"/pages/" page-name (header-id content) "\" >}})")
+                                          (str "[" content "]({{< ref \"/pages/" page-name (->header-id content) "\" >}})")
                                           content)]
                         (s/replace txt whole new-content)))
-        processed-aliases (reduce #(process-matches %1 %2 replace-aliased-ref) text (re-seq alias-pattern text))
-        processed-refs (reduce #(process-matches %1 %2 replace-ref) processed-aliases (re-seq pattern processed-aliases))]
+        processed-aliases (reduce #(process-matches %1 %2 replace-aliased-ref) text (re-seq aliased-ref-pattern text))
+        processed-refs (reduce #(process-matches %1 %2 replace-ref) processed-aliases (re-seq ref-pattern processed-aliases))]
     processed-refs))
 
 (defn parse-image
@@ -369,7 +369,7 @@
                                               (parse-embeds)
                                               (parse-video)
                                               (parse-markers)
-                                              ; (parse-highlights)
+                                              (parse-highlights)
                                               (parse-queries)
                                               (parse-org-cmd)
                                               (rm-logbook-data)
