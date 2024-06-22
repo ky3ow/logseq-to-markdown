@@ -36,4 +36,4 @@ RUN apk add --update \
 
 COPY --from=build /build .
 
-ENTRYPOINT ["node", "/build/index.mjs"]
+ENTRYPOINT ["node", "index.mjs"]

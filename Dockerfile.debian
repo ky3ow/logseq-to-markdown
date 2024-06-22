@@ -1,0 +1,36 @@
+FROM node:lts-bookworm-slim as build
+
+RUN apt-get update && \
+	apt-get install -y \
+	curl \
+	tar \ 
+	git \
+	default-jdk
+
+# babashka
+ENV BB_VERSION=1.3.191
+ENV BB_BINARY_NAME=bb
+ENV BB_REPO=babashka/babashka
+ENV BB_ARCHIVE_URL=https://github.com/$BB_REPO/releases/download/v$BB_VERSION/babashka-$BB_VERSION-linux-amd64.tar.gz
+
+RUN curl -L ${BB_ARCHIVE_URL} -o /tmp/${BB_BINARY_NAME}.tar.gz \
+	&& tar -xzf /tmp/${BB_BINARY_NAME}.tar.gz -C /tmp \
+	&& mv /tmp/${BB_BINARY_NAME} /usr/bin/${BB_BINARY_NAME} \
+	&& chmod +x /usr/bin/${BB_BINARY_NAME}
+
+WORKDIR /build
+
+COPY *.json *.edn index.mjs ./
+COPY src ./src
+
+# install deps
+RUN npm install
+RUN ./node_modules/@logseq/nbb-logseq/cli.js -e ''
+
+FROM node:lts-bookworm-slim
+
+WORKDIR /app
+
+COPY --from=build /build . 
+
+ENTRYPOINT ["node", "index.mjs"]
