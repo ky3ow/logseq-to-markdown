@@ -1,8 +1,8 @@
 FROM node:alpine as build
 
 RUN apk add --update --no-cache \
-	git \
-	make \
+    git \
+    make \
     g++ \
     jpeg-dev \
     cairo-dev \
@@ -10,9 +10,9 @@ RUN apk add --update --no-cache \
     pango-dev \
     libtool \
     autoconf \
-    automake && \
-	apk add openjdk21 --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community && \
-	apk add babashka --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+    automake \
+    && apk add openjdk21 --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community \
+    && apk add babashka --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
 
 WORKDIR /build
 
