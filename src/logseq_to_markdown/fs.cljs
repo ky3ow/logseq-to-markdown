@@ -77,7 +77,12 @@
   [graph-dir datascript]
   (let [name (path/resolve graph-dir)
         bname (path/basename name)
-        file-name (-> name (prepend "logseq_local_") (str ".transit") (s/replace "/" "++"))
-        file-location (path/join (expand-home ".logseq/graphs") file-name)]
+        file-name (-> name 
+                      (prepend "logseq_local_")
+                      (str ".transit")
+                      (s/replace "/" "++"))
+        file-dir (expand-home ".logseq/graphs")
+        file-location (path/join file-dir file-name)]
+    (fs/mkdirSync file-dir #js {:recursive true})
     (fs/writeFileSync file-location datascript)
     bname))
