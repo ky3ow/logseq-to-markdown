@@ -20,8 +20,6 @@ COPY *.json *.edn index.mjs ./
 COPY src ./src
 
 RUN npm install
-RUN sed -i "s/else if (typeof navigator === 'undefined')/else if (true)/" ./node_modules/echarts/dist/echarts.js
-
 RUN ./node_modules/@logseq/nbb-logseq/cli.js -e ''
 
 FROM node:alpine
